@@ -16,4 +16,24 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - run: echo '${{ toJSON(needs) }}'
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/workflow-result
+        id: workflow-result
+        with:
+          needs_json: '${{ toJSON(needs) }}'
+
+      - run: echo '${{ steps.workflow-result.outputs.result }}'
+
+      - run: echo 'Workflow succeeded'
+        if: steps.workflow-result.outputs.result == 'success'
+
+      - run: echo 'Workflow failed'
+        if: steps.workflow-result.outputs.result == 'failure'
+
+      - uses: ./.github/actions/notify-slack
+        with:
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          status: ${{ steps.workflow-result.outputs.result }}
+          success_text: 'DEBUG SUCCESS 👍'
+          failure_text: 'DEBUG FAILURE 👎'

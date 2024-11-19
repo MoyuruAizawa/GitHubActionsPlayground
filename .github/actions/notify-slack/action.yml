@@ -1,0 +1,63 @@
+name: Notify Slack
+inputs:
+  status:
+    description: 'success or failure'
+    required: true
+  success_text:
+    description: 'success text'
+    default: '☺️SUCCESS'
+    required: false
+  failure_text:
+    description: 'failure text'
+    default: '😭FAILED'
+    required: false
+  slack_webhook_url:
+    description: 'Slack webhook url'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - run: |
+        COMMIT_MESSAGE=$(git log --pretty='format:%s' -n 1)
+        echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Post a message in a channel
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        webhook: ${{ inputs.slack_webhook_url }}
+        webhook-type: incoming-webhook
+        payload: |
+          {
+            "text": "${{ inputs.status == 'success' && inputs.success_text || inputs.failure_text }}",
+            "attachments": [
+              {
+                "title": "Workflow Detail",
+                "title_link": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "color": "${{ inputs.status == 'success' && 'good' || 'danger' }}",
+                "fields": [
+                  {
+                    "title": "Commit/PR",
+                    "value": "<${{ github.event.pull_request.html_url || github.event.head_commit.url }}|See>",
+                    "short": true
+                  },
+                  {
+                    "title": "Blanch",
+                    "value": "${{ github.ref_name }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Message",
+                    "value": "${{ env.COMMIT_MESSAGE }}",
+                    "short": false
+                  },
+                  {
+                    "title": "Hash",
+                    "value": "${{ github.sha }}",
+                    "short": false
+                  }
+                ]
+              }
+            ]
+          }

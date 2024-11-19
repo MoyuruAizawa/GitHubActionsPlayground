@@ -1,0 +1,30 @@
+name: Workflow Result
+inputs:
+  needs_json:
+    description: 'json of needs context'
+    required: true
+outputs:
+  result:
+    description: 'workflow result'
+    value: ${{ steps.check-workflow-result.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check Workflow Result
+      id: check-workflow-result
+      run: |
+        needs='${{ inputs.needs_json }}'
+
+        workflow_result=true
+        for job in $(echo $needs | jq -r 'keys[]'); do
+          result=$(echo $needs | jq -r ".\"$job\".result")
+          if [ "$result" != "success" ]; then
+            workflow_result=false
+            break
+          fi
+        done
+
+        result_text=$( [ "$workflow_result" = true ] && echo "success" || echo "failure" )
+        echo "result=$(echo $result_text)" >> $GITHUB_OUTPUT
+      shell: bash
