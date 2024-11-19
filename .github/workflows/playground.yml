@@ -1,0 +1,19 @@
+name: Playground
+on: push
+jobs:
+  job-a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Job A'
+
+  job-b:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Job B'
+
+  summary:
+    needs: [ job-a, job-b ]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: echo '${{ toJSON(needs) }}'
