@@ -31,6 +31,9 @@ jobs:
       - run: echo 'Workflow failed'
         if: steps.workflow-result.outputs.result == 'failure'
 
+      - run: |
+          echo "Hash: ${{ github.sha }}\nMessage: $(git log --pretty='format:%s' -n 1)\nBranch:${{ github.ref_name }}Author:$(git log -1 --pretty=format:"%an")"
+
       - uses: ./.github/actions/notify-slack
         with:
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK }}
